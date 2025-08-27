@@ -106,11 +106,28 @@ with st.expander("📊 Analyse des positions"):
     df_plot_invest = df_invest.set_index('asset')
     fig3, ax3 = plt.subplots(figsize=(7, 3.5)) # Taille adaptée
     
-    plot_data = df_plot_invest[['usdc_invested']]
-    plot_data.plot.bar(ax=ax3, stacked=True, color=['royalblue'])
+    # Tracer les barres de base (investi et/ou emprunté)
+    cols_to_plot = []
+    if 'usdc_invested' in df_plot_invest.columns:
+        cols_to_plot.append('usdc_invested')
+    if 'usdc_borrowed' in df_plot_invest.columns:
+        cols_to_plot.append('usdc_borrowed')
+        
+    if cols_to_plot:
+        df_plot_invest[cols_to_plot].plot.bar(ax=ax3, stacked=True, color=['royalblue', 'grey'])
+
+    # --- DEBUT DE LA CORRECTION ---
     if 'pending_profit' in df_plot_invest.columns:
-        df_plot_invest[df_plot_invest['pending_profit'] >= 0]['pending_profit'].plot.bar(ax=ax3, color='green', label='Profit attente')
-        df_plot_invest[df_plot_invest['pending_profit'] < 0]['pending_profit'].plot.bar(ax=ax3, color='red', label='Perte attente')
+        # Isoler les profits positifs et ne les tracer que s'ils existent
+        positive_profits = df_plot_invest[df_plot_invest['pending_profit'] >= 0]
+        if not positive_profits.empty:
+            positive_profits['pending_profit'].plot.bar(ax=ax3, color='green', label='Profit attente')
+
+        # Isoler les profits négatifs et ne les tracer que s'ils existent
+        negative_profits = df_plot_invest[df_plot_invest['pending_profit'] < 0]
+        if not negative_profits.empty:
+            negative_profits['pending_profit'].plot.bar(ax=ax3, color='red', label='Perte attente')
+    # --- FIN DE LA CORRECTION ---
     
     ax3.set_ylabel('Montant ($)')
     ax3.grid(True, axis='y', linestyle='--', alpha=0.6)
