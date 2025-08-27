@@ -45,7 +45,7 @@ def load_data():
 df_monitoring_full, df_invest = load_data()
 
 if df_monitoring_full is None:
-    st.error(f"Fichiers de données introuvables ou corrompus. Vérifiez les paths.")
+    st.error(f"Fichiers de données introuvables ou corrompus. Vérifiez '{PATH_TO_MONITORING_FILE}' et '{PATH_TO_INVEST_FILE}'.")
     st.stop()
 
 # Filtrage temporel
@@ -71,10 +71,19 @@ now_utc = pd.to_datetime(datetime.datetime.now(datetime.timezone.utc).replace(tz
 time_delta_minutes = (now_utc - last_update_time).total_seconds() / 60
 color_dt = 'green' if time_delta_minutes < 15 else 'red'
 
+# NOUVELLES MÉTRIQUES AJOUTÉES
+usdc_threshold = last_row.get('usdc_threshold', 0)
+margin = tot_usdc - usdc_threshold
+accuracy = last_row.get('accuracy', 1.0)
+tax = last_row.get('tax', 0.0)
+nb_sharp_signals = last_row.get('nb_sharp_2h_greater_0_99', 0)
+
+
 # --- AFFICHAGE DES INDICATEURS CLÉS (KPIs) ---
 st.caption(f"Dernière mise à jour : <font color='{color_dt}'>{last_update_time.strftime('%H:%M:%S')}</font>", unsafe_allow_html=True)
 st.divider()
 
+# Première rangée d'indicateurs
 col1, col2, col3 = st.columns(3)
 col1.metric("Balance", f"{tot_usdc:,.2f} $", f"{gain_total:,.2f} $")
 col2.metric("Investi", f"{usdc_invested:,.0f} $")
@@ -85,6 +94,18 @@ if usdc_borrowed > 0:
     st.metric("Emprunté", f"{usdc_borrowed:,.0f} $")
 
 st.divider()
+
+# --- DEUXIÈME RANGÉE D'INDICATEURS (VOS AJOUTS) ---
+col4, col5, col6 = st.columns(3)
+col4.metric("Marge de Sécurité", f"{margin:,.0f} $", f"Seuil à {usdc_threshold:,.0f} $")
+col5.metric("Précision", f"{accuracy:.2%}")
+col6.metric("Signaux > 0.99", f"{int(nb_sharp_signals)}")
+
+# La "taxe" est souvent mieux en petit, car c'est un détail plus technique
+st.caption(f"Taxe / Slippage moyen : {tax:.3%}")
+
+st.divider()
+
 
 # --- GRAPHIQUES PRINCIPAUX ---
 st.subheader("📈 Évolution des Gains")
@@ -103,37 +124,30 @@ st.pyplot(fig1, use_container_width=True)
 with st.expander("📊 Analyse des positions"):
     # Figure: Répartition par Actif
     st.subheader("Répartition par Actif")
-    df_plot_invest = df_invest.set_index('asset')
-    fig3, ax3 = plt.subplots(figsize=(7, 3.5)) # Taille adaptée
-    
-    # Tracer les barres de base (investi et/ou emprunté)
-    cols_to_plot = []
-    if 'usdc_invested' in df_plot_invest.columns:
-        cols_to_plot.append('usdc_invested')
-    if 'usdc_borrowed' in df_plot_invest.columns:
-        cols_to_plot.append('usdc_borrowed')
+    # S'assurer que le DataFrame n'est pas vide et contient 'asset'
+    if not df_invest.empty and 'asset' in df_invest.columns:
+        df_plot_invest = df_invest.set_index('asset')
+        fig3, ax3 = plt.subplots(figsize=(7, 3.5)) # Taille adaptée
         
-    if cols_to_plot:
-        df_plot_invest[cols_to_plot].plot.bar(ax=ax3, stacked=True, color=['royalblue', 'grey'])
+        plot_data = df_plot_invest[['usdc_invested']]
+        plot_data.plot.bar(ax=ax3, stacked=True, color=['royalblue'])
+        if 'pending_profit' in df_plot_invest.columns:
+            positive_profits = df_plot_invest[df_plot_invest['pending_profit'] >= 0]
+            if not positive_profits.empty:
+                positive_profits['pending_profit'].plot.bar(ax=ax3, color='green', label='Profit attente')
 
-    # --- DEBUT DE LA CORRECTION ---
-    if 'pending_profit' in df_plot_invest.columns:
-        # Isoler les profits positifs et ne les tracer que s'ils existent
-        positive_profits = df_plot_invest[df_plot_invest['pending_profit'] >= 0]
-        if not positive_profits.empty:
-            positive_profits['pending_profit'].plot.bar(ax=ax3, color='green', label='Profit attente')
+            negative_profits = df_plot_invest[df_plot_invest['pending_profit'] < 0]
+            if not negative_profits.empty:
+                negative_profits['pending_profit'].plot.bar(ax=ax3, color='red', label='Perte attente')
+        
+        ax3.set_ylabel('Montant ($)')
+        ax3.grid(True, axis='y', linestyle='--', alpha=0.6)
+        ax3.legend(fontsize='small')
+        fig3.tight_layout()
+        st.pyplot(fig3, use_container_width=True)
+    else:
+        st.info("Aucune position ouverte à afficher.")
 
-        # Isoler les profits négatifs et ne les tracer que s'ils existent
-        negative_profits = df_plot_invest[df_plot_invest['pending_profit'] < 0]
-        if not negative_profits.empty:
-            negative_profits['pending_profit'].plot.bar(ax=ax3, color='red', label='Perte attente')
-    # --- FIN DE LA CORRECTION ---
-    
-    ax3.set_ylabel('Montant ($)')
-    ax3.grid(True, axis='y', linestyle='--', alpha=0.6)
-    ax3.legend(fontsize='small')
-    fig3.tight_layout()
-    st.pyplot(fig3, use_container_width=True)
 
     # Figure: Evolution des Investissements
     st.subheader("Historique des Investissements")
