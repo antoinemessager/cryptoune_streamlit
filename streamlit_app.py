@@ -223,11 +223,6 @@ with st.expander("📉 Analyse du marché et des frais"):
         st.pyplot(fig6, use_container_width=True)
 
 with st.expander("🔎 Analyse de la Performance (Long Terme)"):
-    st.info("Ces graphiques utilisent l'ensemble des données disponibles pour montrer les tendances de fond, indépendamment du filtre de période sélectionné.")
-
-    # Définir une taille de fenêtre pour la moyenne mobile (tendance)
-    # On prend 5% de la taille des données pour que ce soit adaptatif
-    window_size = max(10, int(len(df_monitoring_full) * 0.05))
 
     # --- Graphique 1: Évolution des Signaux ---
     if 'nb_sharp_2h_greater_0_99' in df_monitoring_full.columns:
@@ -235,12 +230,13 @@ with st.expander("🔎 Analyse de la Performance (Long Terme)"):
         
         fig_signals, ax_signals = plt.subplots(figsize=(7, 3.5))
         
-        # Calculer la tendance
-        trend_signals = df_monitoring_full['nb_sharp_2h_greater_0_99'].rolling(window=window_size, min_periods=1).mean()
+        # MODIFICATION : Remplacer .rolling() par .expanding() pour une moyenne depuis le début
+        trend_signals = df_monitoring_full['nb_sharp_2h_greater_0_99'].expanding().mean()
         
         # Tracer les données brutes et la tendance
         ax_signals.plot(df_monitoring_full['timestamp'], df_monitoring_full['nb_sharp_2h_greater_0_99'], label='Donnée brute', color='lightblue', alpha=0.7)
-        ax_signals.plot(df_monitoring_full['timestamp'], trend_signals, label=f'Tendance (Moy. mobile {window_size})', color='darkblue')
+        # MODIFICATION : Mettre à jour le label de la légende
+        ax_signals.plot(df_monitoring_full['timestamp'], trend_signals, label='Moyenne depuis le début', color='darkblue')
         
         ax_signals.set_ylabel("Nombre de signaux")
         ax_signals.grid(True, linestyle='--', alpha=0.6)
@@ -255,12 +251,13 @@ with st.expander("🔎 Analyse de la Performance (Long Terme)"):
         
         fig_acc, ax_acc = plt.subplots(figsize=(7, 3.5))
         
-        # Calculer la tendance
-        trend_accuracy = df_monitoring_full['accuracy'].rolling(window=window_size, min_periods=1).mean()
+        # MODIFICATION : Remplacer .rolling() par .expanding()
+        trend_accuracy = df_monitoring_full['accuracy'].expanding().mean()
         
         # Tracer les données brutes et la tendance (en pourcentage)
         ax_acc.plot(df_monitoring_full['timestamp'], df_monitoring_full['accuracy'] * 100, label='Donnée brute', color='lightgreen', alpha=0.7)
-        ax_acc.plot(df_monitoring_full['timestamp'], trend_accuracy * 100, label=f'Tendance (Moy. mobile {window_size})', color='darkgreen')
+        # MODIFICATION : Mettre à jour le label de la légende
+        ax_acc.plot(df_monitoring_full['timestamp'], trend_accuracy * 100, label='Moyenne depuis le début', color='darkgreen')
         
         ax_acc.set_ylabel("Précision (%)")
         ax_acc.set_ylim(0, 105) # L'axe Y va de 0% à 105%
@@ -276,12 +273,13 @@ with st.expander("🔎 Analyse de la Performance (Long Terme)"):
         
         fig_tax, ax_tax = plt.subplots(figsize=(7, 3.5))
         
-        # Calculer la tendance
-        trend_tax = df_monitoring_full['tax'].rolling(window=window_size, min_periods=1).mean()
+        # MODIFICATION : Remplacer .rolling() par .expanding()
+        trend_tax = df_monitoring_full['tax'].expanding().mean()
         
         # Tracer les données brutes et la tendance (en pourcentage)
         ax_tax.plot(df_monitoring_full['timestamp'], df_monitoring_full['tax'] * 100, label='Donnée brute', color='lightcoral', alpha=0.7)
-        ax_tax.plot(df_monitoring_full['timestamp'], trend_tax * 100, label=f'Tendance (Moy. mobile {window_size})', color='darkred')
+        # MODIFICATION : Mettre à jour le label de la légende
+        ax_tax.plot(df_monitoring_full['timestamp'], trend_tax * 100, label='Moyenne depuis le début', color='darkred')
         
         ax_tax.set_ylabel("Taxe (%)")
         ax_tax.grid(True, linestyle='--', alpha=0.6)
