@@ -7,15 +7,11 @@ import os
 
 # Configuration de la page pour un layout plus adapté au mobile
 st.set_page_config(
-    page_title="Crypto Dashboard",
+    page_title="Cryptoune Dashboard",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# --- CONFIGURATION DES CHEMINS D'ACCÈS ---
-PATH_TO_MONITORING_FILE = 'monitoring_info.csv'
-PATH_TO_INVEST_FILE = 'current_invest.csv'
-# -----------------------------------------
 
 # --- INTERFACE UTILISATEUR ---
 st.title("📈 Dashboard de Monitoring")
@@ -30,8 +26,6 @@ nb_hours = d[min_date]
 # --- CHARGEMENT ET PRÉPARATION DES DONNÉES ---
 @st.cache_data(ttl=60) # Mise en cache des données pour 1 minute
 def load_data():
-    if not os.path.exists(PATH_TO_MONITORING_FILE) or not os.path.exists(PATH_TO_INVEST_FILE):
-        return None, None
     try:
         df_mon=pd.read_excel('https://docs.google.com/spreadsheets/d/e/2PACX-1vSTqIh7BXEaPKj1fukalCyUZE7eydHKVRmtxKy5OuT0mhvUcAnAlpbB8odqbzcv9TT84H-DrxZw-U0v/pub?output=xlsx') 
         df_inv=pd.read_excel('https://docs.google.com/spreadsheets/d/e/2PACX-1vSTqIh7BXEaPKj1fukalCyUZE7eydHKVRmtxKy5OuT0mhvUcAnAlpbB8odqbzcv9TT84H-DrxZw-U0v/pub?output=xlsx',sheet_name='current_invest') 
@@ -51,7 +45,7 @@ def load_data():
 df_monitoring_full, df_invest = load_data()
 
 if df_monitoring_full is None:
-    st.error(f"Fichiers de données introuvables ou corrompus. Vérifiez '{PATH_TO_MONITORING_FILE}' et '{PATH_TO_INVEST_FILE}'.")
+    st.error(f"Fichiers de données introuvables ou corrompus. Vérifiez les paths.")
     st.stop()
 
 # Filtrage temporel
