@@ -1,0 +1,8 @@
+pandas==2.2.2
+numpy==2.0.2
+ta
+gspread_dataframe
+gspread
+openpyxl
+matplotlib
+streamlit
