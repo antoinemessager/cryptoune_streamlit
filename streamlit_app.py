@@ -83,26 +83,45 @@ nb_sharp_signals = last_row.get('nb_sharp_2h_greater_0_99', 0)
 st.caption(f"Dernière mise à jour : <font color='{color_dt}'>{last_update_time.strftime('%H:%M:%S')}</font>", unsafe_allow_html=True)
 st.divider()
 
-# Première rangée d'indicateurs
-col1, col2, col3 = st.columns(3)
-col1.metric("Balance", f"{tot_usdc:,.2f} $", f"{gain_total:,.2f} $")
-col2.metric("Investi", f"{usdc_invested:,.0f} $")
-col3.metric("En attente", f"{pending_profit:,.2f} $")
+# Créer deux colonnes principales pour l'affichage des KPIs
+kpi_col1, kpi_col2 = st.columns(2, gap="medium")
 
-# Affichage conditionnel de l'emprunt
-if usdc_borrowed > 0:
-    st.metric("Emprunté", f"{usdc_borrowed:,.0f} $")
+# --- Colonne de Gauche : Balance et Performance ---
+with kpi_col1:
+    st.subheader("Balance & Risque")
+    # Mettre en avant la métrique la plus importante
+    kpi_col1.metric("Balance Actuelle", f"{tot_usdc:,.2f} $", f"{gain_total:,.2f} $")
 
-st.divider()
+    # Regrouper les autres infos dans un bloc compact
+    # Utilisation de HTML pour un contrôle précis des sauts de ligne (<br>)
+    kpi1_details_html = f"""
+    <div style="font-size: 14px; line-height: 1.6;">
+        <b>Marge de Sécurité:</b> {margin:,.0f} $<br>
+        <span style="font-size: 12px; color: grey;">(Seuil à {usdc_threshold:,.0f} $)</span><br>
+        <b>Précision:</b> {accuracy:.2%}
+    </div>
+    """
+    st.markdown(kpi1_details_html, unsafe_allow_html=True)
 
-# --- DEUXIÈME RANGÉE D'INDICATEURS (VOS AJOUTS) ---
-col4, col5, col6 = st.columns(3)
-col4.metric("Marge de Sécurité", f"{margin:,.0f} $", f"Seuil à {usdc_threshold:,.0f} $")
-col5.metric("Précision", f"{accuracy:.2%}")
-col6.metric("Signaux > 0.99", f"{int(nb_sharp_signals)}")
 
-# La "taxe" est souvent mieux en petit, car c'est un détail plus technique
-st.caption(f"Taxe / Slippage moyen : {tax:.3%}")
+# --- Colonne de Droite : Position et Marché ---
+with kpi_col2:
+    st.subheader("Position & Signaux")
+    # Mettre en avant le montant investi
+    kpi_col2.metric("Total Investi", f"{usdc_invested:,.0f} $")
+    
+    # Définir la couleur du profit en attente
+    color_pending = 'green' if pending_profit >= 0 else 'red'
+
+    # Regrouper les autres infos
+    kpi2_details_html = f"""
+    <div style="font-size: 14px; line-height: 1.6;">
+        <b>Profit en attente:</b> <font color='{color_pending}'>{pending_profit:,.2f} $</font><br>
+        <b>Signaux &gt; 0.99:</b> {int(nb_sharp_signals)}<br>
+        <span style="font-size: 12px; color: grey;">Taxe/Slippage: {tax:.3%}</span>
+    </div>
+    """
+    st.markdown(kpi2_details_html, unsafe_allow_html=True)
 
 st.divider()
 
@@ -194,3 +213,71 @@ with st.expander("📉 Analyse du marché et des frais"):
         ax6.tick_params(axis='x', labelrotation=45)
         fig6.tight_layout()
         st.pyplot(fig6, use_container_width=True)
+
+with st.expander("🔎 Analyse de la Performance (Long Terme)"):
+    st.info("Ces graphiques utilisent l'ensemble des données disponibles pour montrer les tendances de fond, indépendamment du filtre de période sélectionné.")
+
+    # Définir une taille de fenêtre pour la moyenne mobile (tendance)
+    # On prend 5% de la taille des données pour que ce soit adaptatif
+    window_size = max(10, int(len(df_monitoring_full) * 0.05))
+
+    # --- Graphique 1: Évolution des Signaux ---
+    if 'nb_sharp_2h_greater_0_99' in df_monitoring_full.columns:
+        st.subheader("Évolution du Nombre de Signaux > 0.99")
+        
+        fig_signals, ax_signals = plt.subplots(figsize=(7, 3.5))
+        
+        # Calculer la tendance
+        trend_signals = df_monitoring_full['nb_sharp_2h_greater_0_99'].rolling(window=window_size, min_periods=1).mean()
+        
+        # Tracer les données brutes et la tendance
+        ax_signals.plot(df_monitoring_full['timestamp'], df_monitoring_full['nb_sharp_2h_greater_0_99'], label='Donnée brute', color='lightblue', alpha=0.7)
+        ax_signals.plot(df_monitoring_full['timestamp'], trend_signals, label=f'Tendance (Moy. mobile {window_size})', color='darkblue')
+        
+        ax_signals.set_ylabel("Nombre de signaux")
+        ax_signals.grid(True, linestyle='--', alpha=0.6)
+        ax_signals.legend(fontsize='small')
+        ax_signals.tick_params(axis='x', labelrotation=45)
+        fig_signals.tight_layout()
+        st.pyplot(fig_signals, use_container_width=True)
+
+    # --- Graphique 2: Évolution de la Précision ---
+    if 'accuracy' in df_monitoring_full.columns:
+        st.subheader("Évolution de la Précision")
+        
+        fig_acc, ax_acc = plt.subplots(figsize=(7, 3.5))
+        
+        # Calculer la tendance
+        trend_accuracy = df_monitoring_full['accuracy'].rolling(window=window_size, min_periods=1).mean()
+        
+        # Tracer les données brutes et la tendance (en pourcentage)
+        ax_acc.plot(df_monitoring_full['timestamp'], df_monitoring_full['accuracy'] * 100, label='Donnée brute', color='lightgreen', alpha=0.7)
+        ax_acc.plot(df_monitoring_full['timestamp'], trend_accuracy * 100, label=f'Tendance (Moy. mobile {window_size})', color='darkgreen')
+        
+        ax_acc.set_ylabel("Précision (%)")
+        ax_acc.set_ylim(0, 105) # L'axe Y va de 0% à 105%
+        ax_acc.grid(True, linestyle='--', alpha=0.6)
+        ax_acc.legend(fontsize='small')
+        ax_acc.tick_params(axis='x', labelrotation=45)
+        fig_acc.tight_layout()
+        st.pyplot(fig_acc, use_container_width=True)
+
+    # --- Graphique 3: Évolution de la Taxe / Slippage ---
+    if 'tax' in df_monitoring_full.columns:
+        st.subheader("Évolution de la Taxe / Slippage")
+        
+        fig_tax, ax_tax = plt.subplots(figsize=(7, 3.5))
+        
+        # Calculer la tendance
+        trend_tax = df_monitoring_full['tax'].rolling(window=window_size, min_periods=1).mean()
+        
+        # Tracer les données brutes et la tendance (en pourcentage)
+        ax_tax.plot(df_monitoring_full['timestamp'], df_monitoring_full['tax'] * 100, label='Donnée brute', color='lightcoral', alpha=0.7)
+        ax_tax.plot(df_monitoring_full['timestamp'], trend_tax * 100, label=f'Tendance (Moy. mobile {window_size})', color='darkred')
+        
+        ax_tax.set_ylabel("Taxe (%)")
+        ax_tax.grid(True, linestyle='--', alpha=0.6)
+        ax_tax.legend(fontsize='small')
+        ax_tax.tick_params(axis='x', labelrotation=45)
+        fig_tax.tight_layout()
+        st.pyplot(fig_tax, use_container_width=True)
