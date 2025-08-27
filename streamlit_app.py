@@ -150,21 +150,32 @@ with fig_col1:
 with fig_col2:
     # Figure 3: Répartition par Actif
     st.subheader("Répartition par Actif")
-    # Préparation des données pour le bar chart
     df_plot_invest = df_invest.set_index('asset')
-    cols_to_plot = ['usdc_invested']
-    colors = ['royalblue']
-    if 'usdc_borrowed' in df_plot_invest.columns:
-        cols_to_plot.append('usdc_borrowed')
-        colors.append('grey')
+    
+    # --- Début de la correction ---
 
     fig3, ax3 = plt.subplots(figsize=(8, 4))
+    
+    # Tracer les barres de base (investi et emprunté)
+    cols_to_plot = ['usdc_invested']
+    colors = ['royalblue']
+    if 'usdc_borrowed' in df_plot_invest.columns and not df_plot_invest['usdc_borrowed'].empty:
+        cols_to_plot.append('usdc_borrowed')
+        colors.append('grey')
+    
     df_plot_invest[cols_to_plot].plot.bar(ax=ax3, stacked=False, color=colors)
     
-    # Ajout du profit/perte en attente par-dessus
+    # Tracer les profits/pertes en attente, mais seulement s'il y en a
     if 'pending_profit' in df_plot_invest.columns:
-        df_plot_invest[df_plot_invest['pending_profit'] >= 0]['pending_profit'].plot.bar(ax=ax3, color='green', label='Profit en attente')
-        df_plot_invest[df_plot_invest['pending_profit'] < 0]['pending_profit'].plot.bar(ax=ax3, color='red', label='Perte en attente')
+        # Isoler les profits positifs et les tracer s'ils existent
+        positive_profits = df_plot_invest[df_plot_invest['pending_profit'] >= 0]
+        if not positive_profits.empty:
+            positive_profits['pending_profit'].plot.bar(ax=ax3, color='green', label='Profit en attente')
+
+        # Isoler les profits négatifs et les tracer s'ils existent
+        negative_profits = df_plot_invest[df_plot_invest['pending_profit'] < 0]
+        if not negative_profits.empty:
+            negative_profits['pending_profit'].plot.bar(ax=ax3, color='red', label='Perte en attente')
 
     ax3.set_ylabel('Montant ($)')
     ax3.grid(True, axis='y', linestyle='--', alpha=0.6)
@@ -172,8 +183,11 @@ with fig_col2:
     fig3.tight_layout()
     st.pyplot(fig3)
 
+    # --- Fin de la correction ---
+
     # Figure 4: Performance vs Marché
     st.subheader("Performance vs Marché")
+    # (Le reste de votre code pour la Figure 4 reste ici)
     df_monitoring['btc_change'] = 100 * (df_monitoring['price_btc'] / df_monitoring['price_btc'].iloc[0] - 1)
     df_monitoring['real_profit_pct'] = 100 * (df_monitoring['tot_usdc'] / tot_usdc_initial - 1)
     
