@@ -7,10 +7,7 @@ import os
 
 st.set_page_config(layout="wide")
 
-# --- CONFIGURATION DES CHEMINS D'ACCÈS ---
-# Assurez-vous que ces chemins pointent vers les fichiers de sortie de votre script de monitoring
-PATH_TO_MONITORING_FILE = 'monitoring_info.csv'
-PATH_TO_INVEST_FILE = 'current_invest.csv'
+
 # -----------------------------------------
 
 # --- INTERFACE UTILISATEUR ---
@@ -25,15 +22,10 @@ nb_hours = d[min_date]
 
 # --- CHARGEMENT ET PRÉPARATION DES DONNÉES ---
 
-# Vérifier si les fichiers de données existent
-if not os.path.exists(PATH_TO_MONITORING_FILE) or not os.path.exists(PATH_TO_INVEST_FILE):
-    st.error(f"Fichiers de données introuvables. Assurez-vous que '{PATH_TO_MONITORING_FILE}' et '{PATH_TO_INVEST_FILE}' existent.")
-    st.stop()
-
 # Chargement des données de monitoring
 try:
-    df_monitoring = pd.read_csv(PATH_TO_MONITORING_FILE)
-    df_invest = pd.read_csv(PATH_TO_INVEST_FILE)
+    df_monitoring=pd.read_excel('https://docs.google.com/spreadsheets/d/e/2PACX-1vSTqIh7BXEaPKj1fukalCyUZE7eydHKVRmtxKy5OuT0mhvUcAnAlpbB8odqbzcv9TT84H-DrxZw-U0v/pub?output=xlsx') 
+    df_invest=pd.read_excel('https://docs.google.com/spreadsheets/d/e/2PACX-1vSTqIh7BXEaPKj1fukalCyUZE7eydHKVRmtxKy5OuT0mhvUcAnAlpbB8odqbzcv9TT84H-DrxZw-U0v/pub?output=xlsx',sheet_name='current_invest') 
 except Exception as e:
     st.error(f"Erreur lors de la lecture des fichiers CSV : {e}")
     st.stop()
