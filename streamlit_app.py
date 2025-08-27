@@ -84,44 +84,52 @@ st.caption(f"Dernière mise à jour : <font color='{color_dt}'>{last_update_time
 st.divider()
 
 # Créer deux colonnes principales pour l'affichage des KPIs
-kpi_col1, kpi_col2 = st.columns(2, gap="medium")
+kpi_col1, kpi_col2 = st.columns(2, gap="small")
 
-# --- Colonne de Gauche : Balance et Performance ---
+# --- CARTE 1 : Balance et Performance ---
 with kpi_col1:
-    st.subheader("Balance & Risque")
-    # Mettre en avant la métrique la plus importante
-    kpi_col1.metric("Balance Actuelle", f"{tot_usdc:,.2f} $", f"{gain_total:,.2f} $")
+    with st.container(border=True):
+        st.subheader("Balance & Performance")
+        
+        # La métrique principale de cette carte
+        st.metric("Balance Actuelle", f"{tot_usdc:,.2f} $", f"{gain_total:,.2f} $ sur la période")
+        
+        # Détails secondaires, formatés de manière uniforme
+        details_html = f"""
+        <div style="line-height: 1.8;">
+            <b>Précision :</b> {accuracy:.2%}<br>
+            <b>Marge de Sécurité :</b> {margin:,.0f} $<br>
+            <small><i>(Seuil à {usdc_threshold:,.0f} $)</i></small>
+        </div>
+        """
+        st.markdown(details_html, unsafe_allow_html=True)
 
-    # Regrouper les autres infos dans un bloc compact
-    # Utilisation de HTML pour un contrôle précis des sauts de ligne (<br>)
-    kpi1_details_html = f"""
-    <div style="font-size: 14px; line-height: 1.6;">
-        <b>Marge de Sécurité:</b> {margin:,.0f} $<br>
-        <span style="font-size: 12px; color: grey;">(Seuil à {usdc_threshold:,.0f} $)</span><br>
-        <b>Précision:</b> {accuracy:.2%}
-    </div>
-    """
-    st.markdown(kpi1_details_html, unsafe_allow_html=True)
 
-
-# --- Colonne de Droite : Position et Marché ---
+# --- CARTE 2 : Position et Signaux ---
 with kpi_col2:
-    st.subheader("Position & Signaux")
-    # Mettre en avant le montant investi
-    kpi_col2.metric("Total Investi", f"{usdc_invested:,.0f} $")
-    
-    # Définir la couleur du profit en attente
-    color_pending = 'green' if pending_profit >= 0 else 'red'
+    with st.container(border=True):
+        st.subheader("Position & Signaux")
+        
+        # La métrique principale de cette carte
+        st.metric("Total Investi", f"{usdc_invested:,.0f} $")
+        
+        # Couleur pour le profit en attente
+        color_pending = 'green' if pending_profit >= 0 else 'red'
+        
+        # Détails secondaires
+        details_html = f"""
+        <div style="line-height: 1.8;">
+            <b>Profit en attente :</b> <font color='{color_pending}'>{pending_profit:,.2f} $</font><br>
+            <b>Signaux &gt; 0.99 :</b> {int(nb_sharp_signals)}<br>
+            <small><i>(Taxe/Slippage : {tax:.3%})</i></small>
+        </div>
+        """
+        st.markdown(details_html, unsafe_allow_html=True)
 
-    # Regrouper les autres infos
-    kpi2_details_html = f"""
-    <div style="font-size: 14px; line-height: 1.6;">
-        <b>Profit en attente:</b> <font color='{color_pending}'>{pending_profit:,.2f} $</font><br>
-        <b>Signaux &gt; 0.99:</b> {int(nb_sharp_signals)}<br>
-        <span style="font-size: 12px; color: grey;">Taxe/Slippage: {tax:.3%}</span>
-    </div>
-    """
-    st.markdown(kpi2_details_html, unsafe_allow_html=True)
+# Affichage conditionnel de l'emprunt dans une carte dédiée si > 0
+if usdc_borrowed > 0:
+    with st.container(border=True):
+        st.metric("Total Emprunté", f"{usdc_borrowed:,.0f} $")
 
 st.divider()
 
