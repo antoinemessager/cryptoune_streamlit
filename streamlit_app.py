@@ -207,7 +207,7 @@ with st.expander("📉 Analyse du marché et des frais"):
 
     # Affichage conditionnel des graphiques de frais
     if 'total_fees_usdc' in df_monitoring.columns:
-        st.subheader("Évolution des Frais Totaux (Mode MARGIN)")
+        st.subheader("Évolution des Frais Totaux")
         total_fees = df_monitoring['total_fees_usdc'].sum()
         
         fig6, ax6 = plt.subplots(figsize=(7, 3.5)) # Taille adaptée
