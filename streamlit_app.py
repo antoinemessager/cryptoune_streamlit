@@ -206,15 +206,15 @@ with st.expander("📉 Analyse du marché et des frais"):
     st.pyplot(fig4, use_container_width=True)
 
     # Affichage conditionnel des graphiques de frais
-    if 'interest_fees_usdc' in df_monitoring.columns:
-        st.subheader("Analyse des Frais (Mode MARGIN)")
+    if 'total_fees_usdc' in df_monitoring.columns:
+        st.subheader("Évolution des Frais Totaux (Mode MARGIN)")
         total_fees = df_monitoring['total_fees_usdc'].sum()
-        interest_fees = df_monitoring['interest_fees_usdc'].sum()
         
         fig6, ax6 = plt.subplots(figsize=(7, 3.5)) # Taille adaptée
-        ax6.plot(df_monitoring['timestamp'], df_monitoring['total_fees_usdc'].cumsum(), label=f'Totaux ({total_fees:.2f}$)')
-        ax6.plot(df_monitoring['timestamp'], df_monitoring['interest_fees_usdc'].cumsum(), label=f'Intérêt ({interest_fees:.2f}$)')
-        ax6.plot(df_monitoring['timestamp'], (df_monitoring['total_fees_usdc']-df_monitoring['interest_fees_usdc']).cumsum(), label=f'Transaction ({(total_fees - interest_fees):.2f}$)')
+        
+        # On ne trace plus que la somme cumulative des frais totaux
+        ax6.plot(df_monitoring['timestamp'], df_monitoring['total_fees_usdc'].cumsum(), label=f'Frais Totaux Cumulés ({total_fees:.2f}$)')
+        
         ax6.set_ylabel('Frais Cumulés ($)')
         ax6.grid(True, linestyle='--', alpha=0.6)
         ax6.legend(fontsize='small')
@@ -274,12 +274,10 @@ with st.expander("🔎 Analyse de la Performance (Long Terme)"):
         fig_tax, ax_tax = plt.subplots(figsize=(7, 3.5))
         
         # MODIFICATION : Remplacer .rolling() par .expanding()
-        trend_tax = df_monitoring_full['tax'].expanding().mean()
         
         # Tracer les données brutes et la tendance (en pourcentage)
         ax_tax.plot(df_monitoring_full['timestamp'], df_monitoring_full['tax'] * 100, label='Donnée brute', color='lightcoral', alpha=0.7)
         # MODIFICATION : Mettre à jour le label de la légende
-        ax_tax.plot(df_monitoring_full['timestamp'], trend_tax * 100, label='Moyenne depuis le début', color='darkred')
         
         ax_tax.set_ylabel("Taxe (%)")
         ax_tax.grid(True, linestyle='--', alpha=0.6)
