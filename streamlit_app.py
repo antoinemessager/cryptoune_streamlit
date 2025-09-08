@@ -120,7 +120,7 @@ with kpi_col2:
         details_html = f"""
         <div style="line-height: 1.8;">
             <b>Profit en attente :</b> <font color='{color_pending}'>{pending_profit:,.2f} $</font><br>
-            <b>Signaux &gt; 0.99 :</b> {int(nb_sharp_signals)}<br>
+            <b>Signaux &gt; 0 :</b> {int(nb_sharp_signals)}<br>
             <small><i>(Taxe/Slippage : {tax:.3%})</i></small>
         </div>
         """
