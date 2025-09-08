@@ -225,16 +225,16 @@ with st.expander("📉 Analyse du marché et des frais"):
 with st.expander("🔎 Analyse de la Performance (Long Terme)"):
 
     # --- Graphique 1: Évolution des Signaux ---
-    if 'nb_sharp_2h_greater_0_9' in df_monitoring_full.columns:
-        st.subheader("Évolution du Nombre de Signaux > 0.9")
+    if 'nb_positive_sharp_2h' in df_monitoring_full.columns:
+        st.subheader("Évolution du Nombre de Signaux > 0")
         
         fig_signals, ax_signals = plt.subplots(figsize=(7, 3.5))
         
         # MODIFICATION : Remplacer .rolling() par .expanding() pour une moyenne depuis le début
-        trend_signals = df_monitoring_full['nb_sharp_2h_greater_0_9'].expanding().mean()
+        trend_signals = df_monitoring_full['nb_positive_sharp_2h'].expanding().mean()
         
         # Tracer les données brutes et la tendance
-        ax_signals.plot(df_monitoring_full['timestamp'], df_monitoring_full['nb_sharp_2h_greater_0_9'], label='Donnée brute', color='lightblue', alpha=0.7)
+        ax_signals.plot(df_monitoring_full['timestamp'], df_monitoring_full['nb_positive_sharp_2h'], label='Donnée brute', color='lightblue', alpha=0.7)
         # MODIFICATION : Mettre à jour le label de la légende
         ax_signals.plot(df_monitoring_full['timestamp'], trend_signals, label='Moyenne depuis le début', color='darkblue')
         
