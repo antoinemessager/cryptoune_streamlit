@@ -139,6 +139,7 @@ st.subheader("📈 Évolution des Gains")
 fig1, ax1 = plt.subplots(figsize=(7, 3.5)) # Taille adaptée
 ax1.plot(df_monitoring['timestamp'], df_monitoring['gain_theoretical'], label=f'Théorique ({last_row["gain_theoretical"]:,.0f}$)')
 ax1.plot(df_monitoring['timestamp'], df_monitoring['tot_usdc'] - tot_usdc_initial, label=f'Réel ({gain_total:,.0f}$)')
+ax1.plot(df_monitoring['timestamp'], df_monitoring['pending_profit']+df_monitoring['gain_theoretical'], label=f'Temps réel ({pending_profit+pending_profit:,.2f}$)', color='green', linestyle='--')
 ax1.set_ylabel('Gain ($)')
 ax1.grid(True, linestyle='--', alpha=0.6)
 ax1.legend(fontsize='small')
